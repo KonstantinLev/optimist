@@ -10,17 +10,17 @@ var gulp          = require('gulp'),
 	notify        = require("gulp-notify"),
 	autoprefixer  = require('gulp-autoprefixer'),
 	cleancss      = require('gulp-clean-css'),
-	browserSync   = require('browser-sync');
+	browserSync   = require('browser-sync').create();
 
 gulp.task('browser-sync', function() {
 	browserSync.init({
 		server: {
-			baseDir: 'app'
+			baseDir: './app'
 		},
-		injectChanges: true,
 		notify: false
 	})
 });
+
 
 gulp.task('styles', function() {
 	return gulp.src('app/'+syntax+'/**/*.'+syntax+'')
@@ -39,7 +39,7 @@ gulp.task('js', function() {
 		])
 	.pipe(concat('scripts.min.js'))
 	// .pipe(uglify()) // Mifify js (opt.)
-	.pipe(gulp.dest('app/js'))
+	.pipe(gulp.dest('app'))
 	.pipe(browserSync.reload({ stream: true }))
 });
 
@@ -61,7 +61,14 @@ gulp.task('rsync', function() {
 gulp.task('watch', gulp.series('styles', 'js', 'browser-sync', function() {
 	gulp.watch('app/'+syntax+'/**/*.'+syntax+'', ['styles']);
 	gulp.watch(['libs/**/*.js', 'app/js/common.js'], ['js']);
-	gulp.watch('app/*.html', browserSync.reload)
+	//gulp.watch('app/*.html', browserSync.reload);
+	gulp.watch('app/*.html').on('change', browserSync.reload);
 }));
-
 gulp.task('default', gulp.series('watch'));
+
+//gulp.task('watch', ['styles', 'js', 'browser-sync'], function() {
+	//gulp.watch('app/'+syntax+'/**/*.'+syntax+'', ['styles']);
+	//gulp.watch(['libs/**/*.js', 'app/js/common.js'], ['js']);
+	//gulp.watch('app/*.html', browserSync.reload)
+//});
+//gulp.task('default', ['watch']);

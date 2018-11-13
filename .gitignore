@@ -6,3 +6,4 @@
 /**/package-lock.json
 /**/sublime-gulp.log
 .idea
+/app/scripts.min.js
