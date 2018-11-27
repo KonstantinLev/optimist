@@ -61,20 +61,20 @@ gulp.task('imagemin', function() {
 
 gulp.task('build', ['removedist', 'imagemin', 'sass', 'js'], function() {
 
-    var buildFiles = gulp.src([
+    gulp.src([
         'app/*.html',
         'app/.htaccess',
     ]).pipe(gulp.dest('dist'));
 
-    var buildCss = gulp.src([
+    gulp.src([
         'app/css/main.min.css',
     ]).pipe(gulp.dest('dist/css'));
 
-    var buildJs = gulp.src([
-        'app/js/scripts.min.js',
+    gulp.src([
+        'app/js/main.min.js',
     ]).pipe(gulp.dest('dist/js'));
 
-    var buildFonts = gulp.src([
+    gulp.src([
         'app/fonts/**/*',
     ]).pipe(gulp.dest('dist/fonts'));
 
@@ -83,9 +83,9 @@ gulp.task('build', ['removedist', 'imagemin', 'sass', 'js'], function() {
 gulp.task('deploy', function() {
 
     var conn = ftp.create({
-        host:      'hostname.com',
-        user:      'username',
-        password:  'userpassword',
+        host:      'host',
+        user:      'user',
+        password:  'password',
         parallel:  10,
         log: gutil.log
     });
@@ -95,7 +95,7 @@ gulp.task('deploy', function() {
         'dist/.htaccess',
     ];
     return gulp.src(globs, {buffer: false})
-        .pipe(conn.dest('/path/to/folder/on/server'));
+        .pipe(conn.dest('path/to/folder/on/server'));
 
 });
 
