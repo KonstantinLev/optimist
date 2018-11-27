@@ -1,1 +1,0 @@
-<h1><strong>Optimist</strong> <br>Optimized startup site template based on Bootstrap 4 & Gulp</h1>
