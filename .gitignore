@@ -1,9 +1,9 @@
-.git/
+.git
 .idea
 node_modules/
-dist/
-app/css/
-app/js/common.min.js
+src/
+app/js/script.min.js
+.sublime-gulp.cache
 /**/_backstage
 /**/package-lock.json
 /**/sublime-gulp.log

@@ -16,12 +16,15 @@
     "gulp-cache": "^0.4.6",
     "gulp-clean-css": "^3.3.1",
     "gulp-concat": "^2.6.1",
+    "gulp-connect-php": "^1.0.3",
     "gulp-imagemin": "^3.2.0",
     "gulp-notify": "^3.0.0",
     "gulp-rename": "^1.2.2",
     "gulp-sass": "^3.1.0",
     "gulp-uglify": "^2.1.2",
     "gulp-util": "^3.0.8",
+    "imagemin-jpeg-recompress": "^5.1.0",
+    "imagemin-pngquant": "^6.0.0",
     "vinyl-ftp": "^0.6.0"
   }
 }
