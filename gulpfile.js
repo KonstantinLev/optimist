@@ -44,7 +44,7 @@ gulp.task('minify-sass', function() {
 // compress image
 gulp.task('compress-img', function () {
     return gulp.src('app/img/**/*')
-        .pipe(gulp.dest('src/img')) //Копируем изображения заранее, imagemin может пропустить парочку )
+        .pipe(gulp.dest('src/img')) //Копируем изображения заранее, imagemin может "забагать")
         .pipe(cache(imagemin([
             imagemin.gifsicle({interlaced: true}),
             imageminJR({
