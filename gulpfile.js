@@ -18,7 +18,6 @@ var ftp          = require('vinyl-ftp');
 var del          = require('del');
 
 //minify css/js
-gulp.task('minify', ['minify-js', 'minify-sass']);
 gulp.task('minify-js', function() {
     return gulp.src([
         'app/libs/jquery/dist/jquery.min.js',
@@ -40,6 +39,9 @@ gulp.task('minify-sass', function() {
         .pipe(browserSync.reload({stream: true}));
 
 });
+gulp.task('minify', gulp.parallel('minify-js', 'minify-sass'));
+
+
 
 // compress image
 gulp.task('compress-img', function () {
@@ -60,26 +62,26 @@ gulp.task('compress-img', function () {
 
 
 //build src application
-gulp.task('build', ['remove-src', 'compress-img', 'minify-sass', 'minify-js'], function() {
-
-    gulp.src([
-        'app/*.html',
-        'app/*.php',
-        'app/.htaccess',
-    ]).pipe(gulp.dest('src'));
-
-    gulp.src([
-        'app/css/script.min.css',
-    ]).pipe(gulp.dest('src/css'));
-
-    gulp.src([
-        'app/js/script.min.js',
-    ]).pipe(gulp.dest('src/js'));
-
-    gulp.src([
-        'app/fonts/**/*',
-    ]).pipe(gulp.dest('src/fonts'));
-});
+// gulp.task('build', ['remove-src', 'compress-img', 'minify-sass', 'minify-js'], function() {
+//
+//     gulp.src([
+//         'app/*.html',
+//         'app/*.php',
+//         'app/.htaccess',
+//     ]).pipe(gulp.dest('src'));
+//
+//     gulp.src([
+//         'app/css/script.min.css',
+//     ]).pipe(gulp.dest('src/css'));
+//
+//     gulp.src([
+//         'app/js/script.min.js',
+//     ]).pipe(gulp.dest('src/js'));
+//
+//     gulp.src([
+//         'app/fonts/**/*',
+//     ]).pipe(gulp.dest('src/fonts'));
+// });
 
 //deploy files on your server
 gulp.task('deploy', function() {
@@ -108,19 +110,28 @@ gulp.task('php', function() {
     php.server({ base: 'app', port: 8010, keepalive: true});
 });
 
-gulp.task('browser-sync', ['php'], function() {
+gulp.task('browser-sync', gulp.parallel('php'), function() {
     browserSync({
         proxy: '127.0.0.1:8010',
         port: 8080,
-        open: true,
+        open: false,
         notify: false
     });
 });
 
-gulp.task('watch', ['minify-sass', 'minify-js', 'browser-sync'], function() {
-    gulp.watch('app/sass/**/*.sass', ['minify-sass']);
-    gulp.watch(['app/libs/**/*.js', 'app/js/main.js'], ['minify-js']);
+// gulp.task('watch', ['minify-sass', 'minify-js', 'browser-sync'], function() {
+//     gulp.watch('app/sass/**/*.sass', ['minify-sass']);
+//     gulp.watch(['app/libs/**/*.js', 'app/js/main.js'], ['minify-js']);
+//     gulp.watch('app/*.php', browserSync.reload);
+// });
+//
+// gulp.task('default', ['watch']);
+
+
+gulp.task('watch', function() {
+    gulp.watch('app/sass/**/*.sass', gulp.parallel('minify-sass'));
+    gulp.watch(['app/libs/**/*.js', 'app/js/main.js'], gulp.parallel('minify-js'));
     gulp.watch('app/*.php', browserSync.reload);
 });
 
-gulp.task('default', ['watch']);
+gulp.task('default', gulp.parallel('watch', 'browser-sync', 'minify-sass', 'minify-js'));
