@@ -22,7 +22,7 @@ $enjoy = 'Optimist';
 <div class="container">
     <div class="row">
         <div class="col-8 offset-2">
-            <h2 class="text-center"><?=$enjoy?></h2> ytry tr555
+            <h2 class="text-center"><?=$enjoy?></h2>
         </div>
     </div>
 </div>

@@ -17,6 +17,8 @@ var php          = require('gulp-connect-php');
 var ftp          = require('vinyl-ftp');
 var del          = require('del');
 
+var syntax       = 'sass'; // sass or scss;
+
 //minify css/js
 gulp.task('minify-js', function() {
     return gulp.src([
@@ -28,8 +30,8 @@ gulp.task('minify-js', function() {
         .pipe(gulp.dest('app/js'))
         .pipe(browserSync.reload({stream: true}));
 });
-gulp.task('minify-sass', function() {
-    return gulp.src('app/sass/**/*.sass')
+gulp.task('minify-styles', function() {
+    return gulp.src('app/' + syntax + '/**/*.' + syntax)
         .pipe(sass({outputStyle: 'expand'}).on("error", notify.onError()))
         .pipe(rename({suffix: '.min', prefix : ''}))
         .pipe(autoprefixer(['last 25 versions']))
@@ -39,7 +41,7 @@ gulp.task('minify-sass', function() {
         .pipe(browserSync.reload({stream: true}));
 
 });
-gulp.task('minify', gulp.parallel('minify-js', 'minify-sass'));
+gulp.task('minify', gulp.parallel('minify-js', 'minify-styles'));
 
 
 
@@ -61,27 +63,31 @@ gulp.task('compress-img', function () {
 });
 
 
-//build src application
-// gulp.task('build', ['remove-src', 'compress-img', 'minify-sass', 'minify-js'], function() {
-//
-//     gulp.src([
-//         'app/*.html',
-//         'app/*.php',
-//         'app/.htaccess',
-//     ]).pipe(gulp.dest('src'));
-//
-//     gulp.src([
-//         'app/css/script.min.css',
-//     ]).pipe(gulp.dest('src/css'));
-//
-//     gulp.src([
-//         'app/js/script.min.js',
-//     ]).pipe(gulp.dest('src/js'));
-//
-//     gulp.src([
-//         'app/fonts/**/*',
-//     ]).pipe(gulp.dest('src/fonts'));
-// });
+gulp.task('remove-src', function() { return del.sync('src'); });
+
+gulp.task('create-src', function() {
+
+    gulp.src([
+        'app/*.html',
+        'app/*.php',
+        'app/.htaccess',
+    ], {allowEmpty: true}).pipe(gulp.dest('src'));
+
+    gulp.src([
+        'app/css/script.min.css',
+    ]).pipe(gulp.dest('src/css'));
+
+    gulp.src([
+        'app/js/script.min.js',
+    ]).pipe(gulp.dest('src/js'));
+
+    gulp.src([
+        'app/fonts/**/*',
+    ]).pipe(gulp.dest('src/fonts'));
+});
+
+gulp.task('build', gulp.parallel('remove-src', 'compress-img', 'minify', 'create-src'));
+
 
 //deploy files on your server
 gulp.task('deploy', function() {
@@ -103,35 +109,35 @@ gulp.task('deploy', function() {
 
 });
 
-gulp.task('remove-src', function() { return del.sync('src'); });
+
 gulp.task('clearcache', function () { return cache.clearAll(); });
 
-gulp.task('php', function() {
+gulp.task('php-server', function() {
     php.server({ base: 'app', port: 8010, keepalive: true});
 });
 
-gulp.task('browser-sync', gulp.parallel('php'), function() {
+
+gulp.task('bs', function() {
     browserSync({
         proxy: '127.0.0.1:8010',
         port: 8080,
-        open: false,
+        open: true,
         notify: false
     });
 });
 
-// gulp.task('watch', ['minify-sass', 'minify-js', 'browser-sync'], function() {
-//     gulp.watch('app/sass/**/*.sass', ['minify-sass']);
-//     gulp.watch(['app/libs/**/*.js', 'app/js/main.js'], ['minify-js']);
-//     gulp.watch('app/*.php', browserSync.reload);
-// });
-//
-// gulp.task('default', ['watch']);
+gulp.task('browser-sync', gulp.parallel('php-server', 'bs'));
+
+gulp.task('code', function() {
+    return gulp.src('app/*.php')
+        .pipe(browserSync.reload({ stream: true }))
+});
 
 
 gulp.task('watch', function() {
-    gulp.watch('app/sass/**/*.sass', gulp.parallel('minify-sass'));
-    gulp.watch(['app/libs/**/*.js', 'app/js/main.js'], gulp.parallel('minify-js'));
-    gulp.watch('app/*.php', browserSync.reload);
+    gulp.watch('app/' + syntax + '/**/*.' + syntax, gulp.series('minify-styles'));
+    gulp.watch(['app/libs/**/*.js', 'app/js/main.js'], gulp.series('minify-js'));
+    gulp.watch('app/*.php', gulp.series('code'));
 });
 
-gulp.task('default', gulp.parallel('watch', 'browser-sync', 'minify-sass', 'minify-js'));
+gulp.task('default', gulp.parallel('minify', 'browser-sync', 'watch'));
