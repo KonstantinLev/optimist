@@ -16,3 +16,12 @@ Configuration
 
 How to use
 -----
+
+Whatnot
+-----
+
+```
+npm update -D browser-sync del gulp gulp-autoprefixer gulp-cache gulp-clean-css gulp-concat gulp-connect-php gulp-imagemin gulp-notify gulp-rename gulp-sass gulp-uglify gulp-util imagemin-jpeg-recompress imagemin-pngquant vinyl-ftp
+
+npm audit fix
+```

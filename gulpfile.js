@@ -8,6 +8,7 @@ var rename       = require('gulp-rename');
 var imagemin     = require('gulp-imagemin');
 var imageminJR   = require('imagemin-jpeg-recompress');
 var imageminPng  = require('imagemin-pngquant');
+var imageminJpgtr= require('imagemin-jpegtran');
 var cache        = require('gulp-cache');
 var autoprefixer = require('gulp-autoprefixer');
 var notify       = require('gulp-notify');
@@ -43,50 +44,55 @@ gulp.task('minify-styles', function() {
 });
 gulp.task('minify', gulp.parallel('minify-js', 'minify-styles'));
 
-
-
 // compress image
-gulp.task('compress-img', function () {
-    return gulp.src('app/img/**/*')
-        .pipe(gulp.dest('src/img')) //Копируем изображения заранее, imagemin может "забагать")
+gulp.task('compress-img', function (cb) {
+    gulp.src('app/img/**/*')
+        //.pipe(gulp.dest('dest/img')) //Копируем изображения заранее, imagemin может "забагать")
+        // .pipe(cache(imagemin([
+        //     imagemin.gifsicle({interlaced: true}),
+
+        //     imageminPng({quality: '80'}),
+        //     imagemin.svgo({plugins: [{removeViewBox: true}]})
+        // ])))
         .pipe(cache(imagemin([
             imagemin.gifsicle({interlaced: true}),
-            imageminJR({
-                progressive: true,
-                max: 80,
-                min: 70
-            }),
+            imageminJpgtr({progressive: true}),
             imageminPng({quality: '80'}),
             imagemin.svgo({plugins: [{removeViewBox: true}]})
-        ])))
-        .pipe(gulp.dest('src/img'));
+            ], {verbose: true}
+        )))
+        .pipe(gulp.dest('dest/img'));
+    cb();
 });
 
 
-gulp.task('remove-src', function() { return del.sync('src'); });
+gulp.task('remove-dest', function(cb) {
+    del.sync('dest');
+    cb();
+});
 
-gulp.task('create-src', function() {
-
+gulp.task('create-dest', function(cb) {
     gulp.src([
         'app/*.html',
         'app/*.php',
         'app/.htaccess',
-    ], {allowEmpty: true}).pipe(gulp.dest('src'));
+    ], {allowEmpty: true}).pipe(gulp.dest('dest'));
 
     gulp.src([
         'app/css/script.min.css',
-    ]).pipe(gulp.dest('src/css'));
+    ]).pipe(gulp.dest('dest/css'));
 
     gulp.src([
         'app/js/script.min.js',
-    ]).pipe(gulp.dest('src/js'));
+    ]).pipe(gulp.dest('dest/js'));
 
     gulp.src([
         'app/fonts/**/*',
-    ]).pipe(gulp.dest('src/fonts'));
+    ]).pipe(gulp.dest('dest/fonts'));
+    cb();
 });
 
-gulp.task('build', gulp.parallel('remove-src', 'compress-img', 'minify', 'create-src'));
+gulp.task('build', gulp.series('remove-dest', 'compress-img', 'minify', 'create-dest'));
 
 
 //deploy files on your server
