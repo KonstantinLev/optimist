@@ -13,7 +13,7 @@ var cache        = require('gulp-cache');
 var autoprefixer = require('gulp-autoprefixer');
 var notify       = require('gulp-notify');
 
-var browserSync  = require('browser-sync');
+var browserSync  = require('browser-sync').create();
 var php          = require('gulp-connect-php');
 var ftp          = require('vinyl-ftp');
 var del          = require('del');
@@ -45,14 +45,13 @@ var paths = {
         ]
     },
     images: {
-        src: 'app/img/**/*',
-        dest: 'dest/img',
-        watch: 'app/img/**/*'
+        src: 'app/assets/img/**/*',
+        dest: 'dest/assets/img'
     },
-    fonts: {
-        src: 'app/fonts/**/*',
-        dest: 'dest/fonts',
-        watch: 'app/fonts/**/*'
+    assets: {
+        src: ['app/assets/**/*', '!app/assets/img/**'],
+        dest: 'dest/assets',
+        watch: 'app/assets/**/*'
     },
     configs: {
         php: {
@@ -123,7 +122,8 @@ gulp.task('create-dest', function(cb) {
     gulp.src(paths.views.src, {allowEmpty: true}).pipe(gulp.dest(paths.views.dest));
     gulp.src(paths.styles.src + '/' + paths.styles.minName).pipe(gulp.dest(paths.styles.dest));
     gulp.src(paths.scripts.src + '/' + paths.scripts.minName).pipe(gulp.dest(paths.scripts.dest));
-    gulp.src(paths.fonts.src).pipe(gulp.dest(paths.fonts.dest));
+    //gulp.src(paths.fonts.src).pipe(gulp.dest(paths.fonts.dest));
+    gulp.src(paths.assets.src).pipe(gulp.dest(paths.assets.dest));
     cb();
 });
 
@@ -147,7 +147,7 @@ gulp.task('php-server', function() {
 });
 
 gulp.task('bs', function() {
-    browserSync(paths.configs.browserSync);
+    browserSync.init(paths.configs.browserSync);
 });
 
 gulp.task('browser-sync', gulp.parallel('php-server', 'bs'));
@@ -157,10 +157,16 @@ gulp.task('code', function() {
         .pipe(browserSync.reload({ stream: true }))
 });
 
+gulp.task('assets', function() {
+    return gulp.src(paths.assets.watch, {since: gulp.lastRun('assets')})
+        .pipe(browserSync.reload({ stream: true }))
+});
+
 gulp.task('watch', function() {
     gulp.watch(paths.styles.watch, gulp.series('minify-styles'));
     gulp.watch(paths.scripts.watch, gulp.series('minify-js'));
     gulp.watch(paths.views.watch, gulp.series('code'));
+    gulp.watch(paths.assets.watch, gulp.series('assets'));
 });
 
-gulp.task('default', gulp.parallel('browser-sync', 'watch'));
+gulp.task('default', gulp.parallel('minify', 'browser-sync', 'watch')); //todo minify-js work 1 time
