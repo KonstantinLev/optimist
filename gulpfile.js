@@ -1,19 +1,20 @@
-var gulp         = require('gulp');
-var gutil        = require('gulp-util');
-var sass         = require('gulp-sass');
-var concat       = require('gulp-concat');
-var uglify       = require('gulp-uglify');
-var cleanCSS     = require('gulp-clean-css');
-var rename       = require('gulp-rename');
-var imagemin     = require('gulp-imagemin');
-var imageminJR   = require('imagemin-jpeg-recompress');
-var imageminPng  = require('imagemin-pngquant');
-var imageminJpgtr= require('imagemin-jpegtran');
-var cache        = require('gulp-cache');
-var autoprefixer = require('gulp-autoprefixer');
-var notify       = require('gulp-notify');
+var gulp              = require('gulp');
+var gutil             = require('gulp-util');
+var sass              = require('gulp-sass');
+var concat            = require('gulp-concat');
+var uglify            = require('gulp-uglify');
+var cleanCSS          = require('gulp-clean-css');
+var rename            = require('gulp-rename');
+var imagemin          = require('gulp-imagemin');
+var imageminPngquant  = require('imagemin-pngquant');
+var imageminZopfli    = require('imagemin-zopfli');
+var imageminMozjpeg   = require('imagemin-mozjpeg');
+var imageminGiflossy  = require('imagemin-giflossy');
+var cache             = require('gulp-cache');
+var autoprefixer      = require('gulp-autoprefixer');
+var notify            = require('gulp-notify');
 
-var browserSync  = require('browser-sync').create();
+var browserSync  = require('browser-sync');
 var php          = require('gulp-connect-php');
 var ftp          = require('vinyl-ftp');
 var del          = require('del');
@@ -40,8 +41,8 @@ var paths = {
         minName: 'script.min.js',
         dest: 'dest/js',
         watch: [
-            'app/libs/**/*.js', //todo add manualy?
-            'app/js/main.js'
+            'app/libs/**/*.js',
+            'app/js/**/main.js'
         ]
     },
     images: {
@@ -76,60 +77,89 @@ var paths = {
     }
 };
 
-//minify css/js
-gulp.task('minify-js', function() {
+gulp.task('cache:clear', function () { return cache.clearAll(); });
+
+/**
+ * Minify css/js
+ */
+gulp.task('scripts', function() {
     return gulp.src(paths.scripts.watch)
         .pipe(concat(paths.scripts.minName))
-        .pipe(uglify())
+        //.pipe(uglify()) //uncommenting for prod
         .pipe(gulp.dest(paths.scripts.src))
         .pipe(browserSync.reload({stream: true}));
 });
-gulp.task('minify-styles', function() {
+gulp.task('styles', function() {
     return gulp.src(paths.styles.watch)
-        .pipe(sass({outputStyle: 'expand'}).on("error", notify.onError()))
+        .pipe(sass({outputStyle: 'expand'}).on('error', notify.onError()))
         .pipe(rename({suffix: '.min', prefix : ''}))
         .pipe(autoprefixer(['last 25 versions']))
         .pipe(concat(paths.styles.minName))
         .pipe(cleanCSS())
         .pipe(gulp.dest(paths.styles.src))
-        .pipe(browserSync.reload({stream: true}));
+        .pipe(browserSync.stream());
 
 });
-gulp.task('minify', gulp.parallel('minify-js', 'minify-styles'));
+gulp.task('ss', gulp.parallel('scripts', 'styles'));
 
-// compress image
-gulp.task('compress-img', function (cb) {
+/**
+ * Compress image (70-80% compression)
+ */
+gulp.task('img:compress', function (cb) {
     gulp.src(paths.images.src)
-        //.pipe(gulp.dest('dest/img')) //Копируем изображения заранее, imagemin может "забагать")
-            //todo
-        // [
-        // imagemin.gifsicle({interlaced: true}),
-        //     imageminJpgtr({progressive: true}),
-        //     imageminPng({quality: '80'}),
-        //     imagemin.svgo({plugins: [{removeViewBox: true}]})
-        // ]
-        .pipe(cache(imagemin({verbose: true})))
+        .pipe(imagemin([
+            imageminGiflossy({
+                optimizationLevel: 3,
+                optimize: 3,
+                lossy: 2
+            }),
+            imageminPngquant({
+                speed: 5,
+                quality: [0.6, 0.8]
+            }),
+            imageminZopfli({
+                more: true
+            }),
+            imageminMozjpeg({
+                progressive: true,
+                quality: 70
+            }),
+            imagemin.svgo({
+                plugins: [
+                    { removeViewBox: false },
+                    { removeUnusedNS: false },
+                    { removeUselessStrokeAndFill: false },
+                    { cleanupIDs: false },
+                    { removeComments: true },
+                    { removeEmptyAttrs: true },
+                    { removeEmptyText: true },
+                    { collapseGroups: true }
+                ]
+            })
+        ]))
         .pipe(gulp.dest(paths.images.dest));
     cb();
 });
 
-gulp.task('remove-dest', function(cb) {
+/**
+ * Build production
+ */
+gulp.task('dest:remove', function(cb) {
     del.sync(paths.views.dest);
     cb();
 });
-
-gulp.task('create-dest', function(cb) {
+gulp.task('dest:create', function(cb) {
     gulp.src(paths.views.src, {allowEmpty: true}).pipe(gulp.dest(paths.views.dest));
     gulp.src(paths.styles.src + '/' + paths.styles.minName).pipe(gulp.dest(paths.styles.dest));
     gulp.src(paths.scripts.src + '/' + paths.scripts.minName).pipe(gulp.dest(paths.scripts.dest));
-    //gulp.src(paths.fonts.src).pipe(gulp.dest(paths.fonts.dest));
     gulp.src(paths.assets.src).pipe(gulp.dest(paths.assets.dest));
     cb();
 });
+gulp.task('build', gulp.series('dest:remove', 'ss', 'dest:create', 'img:compress'));
 
-gulp.task('build', gulp.series('remove-dest', 'compress-img', 'minify', 'create-dest'));
-
-//deploy files on your server
+/**
+ * deploy files on your server
+ */
 gulp.task('deploy', function() {
     var conn = ftp.create(paths.configs.ftp);
     var globs = [
@@ -140,33 +170,41 @@ gulp.task('deploy', function() {
         .pipe(conn.dest('path/to/folder/on/server'));
 });
 
-gulp.task('clearcache', function () { return cache.clearAll(); });
-
+/**
+ * Start server
+ */
 gulp.task('php-server', function() {
     php.server(paths.configs.php);
 });
-
-gulp.task('bs', function() {
+gulp.task('browser-sync', function() {
     browserSync.init(paths.configs.browserSync);
 });
+gulp.task('server', gulp.parallel('php-server', 'browser-sync'));
 
-gulp.task('browser-sync', gulp.parallel('php-server', 'bs'));
-
-gulp.task('code', function() {
+/**
+ * Reload views
+ */
+gulp.task('views', function() {
     return gulp.src(paths.views.watch)
         .pipe(browserSync.reload({ stream: true }))
 });
 
+/**
+ * Reload assets
+ */
 gulp.task('assets', function() {
     return gulp.src(paths.assets.watch, {since: gulp.lastRun('assets')})
         .pipe(browserSync.reload({ stream: true }))
 });
 
+/**
+ * File monitoring
+ */
 gulp.task('watch', function() {
-    gulp.watch(paths.styles.watch, gulp.series('minify-styles'));
-    gulp.watch(paths.scripts.watch, gulp.series('minify-js'));
-    gulp.watch(paths.views.watch, gulp.series('code'));
-    gulp.watch(paths.assets.watch, gulp.series('assets'));
+    gulp.watch(paths.styles.watch , gulp.series('styles'));
+    gulp.watch(paths.scripts.watch, gulp.parallel('scripts'));
+    gulp.watch(paths.views.watch  , gulp.series('views'));
+    gulp.watch(paths.assets.watch , gulp.series('assets'));
 });
 
-gulp.task('default', gulp.parallel('minify', 'browser-sync', 'watch')); //todo minify-js work 1 time
+gulp.task('default', gulp.series('ss', gulp.parallel('watch', 'server')));

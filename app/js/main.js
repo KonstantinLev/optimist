@@ -1,4 +1,3 @@
 $(function() {
-
-    // Custom
+    //some code
 });
