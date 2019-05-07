@@ -1,9 +1,7 @@
 .git
 .idea
 node_modules/
-src/
 dest/
-app/js/script.min.js
 .sublime-gulp.cache
 /**/_backstage
 /**/package-lock.json

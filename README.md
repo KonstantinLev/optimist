@@ -1,7 +1,12 @@
-<h1><strong>Optimist</strong> <br>Optimized startup site template based on Bootstrap 4 & Gulp</h1>
+<h1>
+<strong>Optimist</strong><br>
+Optimized startup site template based on 
+Bootstrap 4 & Gulp 4
+</h1>
 
 # Optimist
-Optimist (acronim: OPTIMIzed Site Template) - optimized startup site template based on Bootstrap 4 & Gulp
+Optimist (acronim: OPTIMIzed Site Template) - optimized startup site template based on Bootstrap 4 
+& Gulp. Supports live browser restart and start a php server.
 
 Installing
 ------------
