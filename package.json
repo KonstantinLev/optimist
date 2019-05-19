@@ -1,7 +1,7 @@
 {
-  "name": "Optimist",
+  "name": "optimist",
   "version": "1.0.0",
-  "description": "Optimized startup site template based on Bootstrap 4 & Gulp 4. Supports live browser restart and start a php server",
+  "description": "Optimized startup site template based on Bootstrap & Gulp. Supports live browser restart and start a php server",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
